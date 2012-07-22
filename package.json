@@ -1,0 +1,19 @@
+{
+  "author": "Elijah Insua <tmpvar@gmail.com> (http://tmpvar.com)",
+  "name": "tirc",
+  "description": "tmpvar's irc client",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/tmpvar/tirc.git"
+  },
+  "dependencies": {
+    "irc": "~0.3.4"
+  },
+  "devDependencies": {
+    "appjs" : "*"
+  },
+  "bin" : {
+    "tirc" : "bin/run.sh"
+  }
+}

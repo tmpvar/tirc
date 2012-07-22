@@ -1,0 +1,7 @@
+{
+  "nick"   : "tmpvar-tirc",
+  "server" : "irc.freenode.net",
+  "channels" : [
+    "#reflexjs"
+  ]
+}
