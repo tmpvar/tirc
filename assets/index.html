@@ -3,11 +3,12 @@
 <head>
   <title>tirc</title>
   <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="js/keymaster.js"></script>
   <style>
+    html { margin:0; padding: 0; }
     body {
-      height: 440px;
-      overflow: none;
-      background-color: #333;
+      height: 90%;
+      background-color: #333;/*rgba(125, 125, 125, .1);*/
       padding:0;
       margin:0;
       width: 99%;
@@ -20,18 +21,28 @@
       padding:0;
     }
 
+    a {
+      color: #2870E1;
+      text-decoration: none;
+    }
+
     #channel {
       color: white;
       padding: 2px;
-      height: 99.5%;
+      height: 80%;
+      margin-left:1%;
       overflow-y: scroll;
+      padding-bottom:10%;
     }
 
     /* Let's get this party started */
     ::-webkit-scrollbar {
+      width: 5px;
+    }
 
-        width: 5px;
-        right:-5px;
+    ::-webkit-scrollbar-track {
+      width:5px;
+      right:0;
     }
 
     /* Handle */
@@ -50,14 +61,13 @@
         font-weight: bold;
       }
 
-        #channel li em.nick {
+        #channel li em.nick, .user {
           color: #7BFB43;
         }
 
-        #channel li a.channel {
+        #channel li a.channel, .channel {
           color: #E14319;
           text-decoration: none;
-
         }
 
         #channel li a.channel:hover {
@@ -96,12 +106,15 @@
       }
 
     #user-input {
-      width: 99%;
-      margin-left: 2px;
+      width: 97%;
       border:1px solid #666;
       -webkit-border-radius: 3px;
       border-radius: 3px;
-      background: #ddd;
+      background: #454647;
+      margin-left:1%;
+      font-size:16px;
+      line-height: 22px;
+      color: #999;
     }
 
     .view {
@@ -112,6 +125,24 @@
       display:none;
     }
 
+    .expando {
+      margin-top:24px;
+      text-align:center;
+    }
+
+    #input {
+      width:100%;
+      position:fixed;
+      bottom:0;
+      padding-bottom:10px;
+      -webkit-border-radius: 3px;
+    }
+
+      #input .context {
+        font-size: 16px;
+        margin:5px;
+        font-weight: bold;
+      }
 
 
 
@@ -124,7 +155,7 @@
     </section>
 
     <section id="input">
-      <input type="text" id="user-input" />
+      <div class="context"></div><input type="text" id="user-input" />
     </section>
   </section>
 

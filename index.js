@@ -2,7 +2,9 @@ var
   appjs  = require('appjs'),
   irc = require('irc'),
   fs     = require('fs'),
-  config, window;
+  commands = require('./command'),
+  config = require('./lib/config'),
+  window, channel;
 
 try {
   config = require(process.env.HOME + '.tirc');
@@ -29,28 +31,39 @@ window = appjs.createWindow('http://appjs/', {
 
 
 var client = new irc.Client(config.server, config.nick, {
-  channels : config.channels
+  channels : config.channels,
+  userName: process.env.USER,
+  realName: process.env.USER
 });
 
 window.on('ready', function() {
   var $ = window.$;
 
-  window.title = 'tirc (' + config.nick + ')';
-
-  client.on('join', function(channel) {
-    $('#channel ul').append(
-      '<li class="system join">' +
-      'you have joined <span class="channel">' +
-      channel + '</span></li>'
-    )
+  client.on('join', function(channel, nick) {
+    if (nick === config.nick) {
+      $('#channel ul').append(
+        '<li class="system join">' +
+        'you have joined <span class="channel">' +
+        channel + '</span></li>'
+      )
+    }
   });
 
+  $('.expando').live('click', function() {
+    $('img', this).removeClass('hide');
+  });
+
+  client.on('error', function() {
+    console.log(arguments);
+  })
+
   client.on('message', function(from, to, message) {
-    var li = $(
-      '<li><a class="channel" href="' + to + '">' + to +
-      '</a> <em class="nick">&lt;' + from +
-      '&gt;</em> <span class="msg"></span>'
-    );
+    var str = '<li>';
+    if (to[0] === '#') {
+      str += '<a class="channel" href="' + to + '">' + to +'</a>'
+    }
+    str += ' <em class="nick">&lt;' + from + '&gt;</em> <span class="msg"></span>';
+    var li = $(str);
 
     message = $('<div/>').text(message).html();
 
@@ -62,41 +75,123 @@ window.on('ready', function() {
       );
     }
 
+    message = message.replace(
+      /(\b(https?|ftp|file):\/\/[^ ]+\.)(png|jpeg|jpg|bpm)/ig,
+      '<div class="expando"><img src="$1$3" width="90%" /><p><a href="$1$3" target="_blank">$1$3</a></p></div>'
+    );
+
+    /*var urls = message.match(/(https?[^ "]+)/g);
+    console.log(urls);
+    urls && urls.forEach(function(url) {
+      if (url.match(/\.(png|jpeg|jpg|bmp)$/)) {
+
+        // TODO: load the image first to figure out its dimensions
+        message = message.replace(url, [
+          '<div href="#" class="expando">',
+          '<img class="" src="',
+          url,
+          '" width="90%" /><p>' + url + '</p></div>'
+        ].join(''));
+      } else {
+
+        //message = message.replace(url, '<iframe src="' + url + '"></iframe>');
+      }
+    });*/
+console.log(message)
+
     li.find('.msg').html(message);
 
 
     $('#channel ul').append(li);
   });
 
+  function log(message) {
+    $('#channel ul').append(
+      '<li class="log">' + message + '</li>'
+    );
+  }
+
+  var history = [];
+
+  $('#user-input').focus();
   $('#user-input').on('keydown', function(ev) {
     var key = ev.which, text = $(this).val();
 
+    if (!text) { return; }
+
     switch (key) {
       case 13:
+
         var
-          matches = text.match(/(#[^ ]*) (.*)/),
-          // TODO: use the current filter
-          channel = '#reflexjs';
+          parts = text.split(' ');
 
-        if (matches.length > 2) {
-          channel = matches[1];
-          text = matches[2];
-        }
+          switch (parts[0]) {
+            case '/nick':
+              if (parts.length === 2) {
+                client.send('NICK', parts[1]);
+                config.nick = parts[1];
+              } else {
+                // TODO: consolidate errors/system messages
+              }
+            break;
 
-        client.emit('message', config.nick, channel, text);
-        client.say(channel, text);
-        $(this).val('');
+            case '/join':
+              config.channels.push(parts[1]);
+              client.send('JOIN', parts[1]);
+            break;
+
+            case '/part':
+              // TODO: error if you try to leave a conversation
+              config.channels.filter(function(val) {
+                return !(val === parts[1])
+              });
+              client.send('PART', channel);
+            break;
+
+            case '/channels':
+              var prefix = '<span class="channel">', suffix = "</span>";
+              log('you are currently in ' + prefix + config.channels.join(suffix+', '+ prefix) + suffix)
+            break;
+
+            case '/servers':
+
+            break;
+
+            case '/connect':
+
+            break;
+
+            // send a message
+            default:
+
+              // switch the current context
+              if (parts[0][0] === "#" || parts[0][0] === "@") {
+                $('#input .context').text(parts[0]);
+
+                var cls = parts[0][0] === "@" ? 'user' : 'channel';
+                console.log('add', cls);
+                $('#input .context').removeClass('user channel');
+                $('#input .context').addClass(cls);
+
+                channel = parts[0].replace('@', '');
+                parts.shift();
+                text = parts.join(' ');
+              }
+
+              client.emit('message', config.nick, channel, text);
+              client.say(channel, text);
+
+            break;
+          }
+          $(this).val('');
       break;
     }
-
   });
 
   this.require = require;
   this.process = process;
   this.module = module;
-  //this.console.open();
-  //this.console.log('process', process);
-  //this.frame.center();
+
   this.frame.show();
   console.log("Window Ready");
 });
